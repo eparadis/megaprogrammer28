@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # Uses the Arduino firmware given on http://danceswithferrets.org/geekblog/?p=496
 #
 # -r start end (in decimal) - Standard Hexdump
@@ -20,7 +20,7 @@ import time
 
 RECSIZE = 16
 
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.1)
+ser = serial.Serial('/dev/cu.usbmodem14301', 115200, timeout=0.1)
 sys.argv.pop(0)
 dumpstart = -1
 dumpend = -1
@@ -47,12 +47,13 @@ def waitokay():
     bad = 0
     while True:
         s = ser.readline()
-        if s == "OK\r\n":
+        print(s)
+        if s == b'OK\r\n':
             break
         else:
             bad = bad + 1
-        if bad > 50:
-            sys.exit("eh")
+        if bad > 20:
+            sys.exit("error: no OK response from Arduino!")
 
 if s == "-r":
     dumpstart = int(sys.argv[1])
@@ -61,9 +62,9 @@ if s == "-r":
         while (dumpstart <= dumpend):
             addr = "%04x" % dumpstart
             s = "R" + addr + chr(10)
-            ser.write(s)
+            ser.write(s.encode())
             l = ser.readline()
-            print l.upper(),
+            print(l.upper(), end=' ')
             waitokay()
             dumpstart = dumpstart + RECSIZE
 
@@ -75,14 +76,14 @@ if s == "-R":
         while (dumpstart <= dumpend):
             addr = "%04x" % dumpstart
             s = "R" + addr + chr(10)
-            ser.write(s)
+            ser.write(s.encode())
             l = ser.readline()
             o = l.upper()
             content = o[5:-5]
             for i in range(0,64,2):
                 by = content[i:i+2]
-                print by,
-            print
+                print(by, end=' ')
+            print()
             waitokay()
             dumpstart = dumpstart + RECSIZE
 
@@ -94,7 +95,7 @@ if s == "-b":
         while (dumpstart <= dumpend):
             addr = "%04x" % dumpstart
             s = "R" + addr + chr(10)
-            ser.write(s)
+            ser.write(s.encode())
             l = ser.readline()
             o = l.upper()
             content = o[5:-5]
@@ -114,7 +115,7 @@ if s == "-s":
         if len(l) == 0:
             break
         s = calcwriteline(a, l)
-        print s
+        print(s)
         sys.stdout.flush()
         ser.write(s + chr(10))
         waitokay()
@@ -126,14 +127,18 @@ if s == "-s":
 
 
 if s == "-v":
+    print('-v mode')
     f = open(sys.argv[1], 'rb')
     a = 0
     badcount = 0
     while True:
-        s = "R" + ("%04x" % a) + chr(10)
-        ser.write(s)
+        #s = ("R" + ("%04x" % a) + chr(10)).encode('utf-8')
+        s = ("R%04x\n" % a).encode()
+        print(s)
+        print("%d bytes out" % ser.write(s))
         l = ser.readline()
         l = l.upper()
+        print(l)
         waitokay()
 
         romt = "ROM  %04x:" % a
@@ -144,7 +149,7 @@ if s == "-v":
             c = int(l[i:i+2], 16)
             romt = romt + str(" %02x" % c)
             rom[p] = c
-        print romt, "\r",
+        print(romt, "\r", end=' ')
         sys.stdout.flush()
 
         r = f.read(RECSIZE)
@@ -153,16 +158,16 @@ if s == "-v":
         okay = 1
         filet = "FILE %04x:" % a
         for i in range(len(r)):
-            filet = filet + " %02x" % ord(r[i])
-            if rom[i] != ord(r[i]):
+            filet = filet + " %02x" % r[i]
+            if rom[i] != r[i]:
                 okay = 0
                 badcount = badcount + 1
 
         if okay == 0:
-            print
-            print filet
-            print "MISMATCH!!"
-            print
+            print()
+            print(filet)
+            print("MISMATCH!!")
+            print()
             sys.stdout.flush()
 
         if len(r) != RECSIZE:
@@ -170,8 +175,8 @@ if s == "-v":
         else:
             a = a + RECSIZE
 
-    print
-    print badcount, "errors!"
+    print()
+    print(badcount, "errors!")
     sys.stdout.flush()
     f.close()
 
@@ -197,7 +202,7 @@ if s == "-S":
         r = f.read(RECSIZE)
         if len(r) == 0:
             break
-        print romt,
+        print(romt, end=' ')
         sys.stdout.flush()
         okay = 1
         filet = "FILE %04x:" % a
@@ -210,13 +215,13 @@ if s == "-S":
 
         if okay == 0:
             s = calcwriteline(a, r)
-            print
-            print filet, "UPDATING"
+            print()
+            print(filet, "UPDATING")
             sys.stdout.flush()
             ser.write(s+chr(10))
             waitokay()
         else:
-            print " OKAY"
+            print(" OKAY")
         sys.stdout.flush()
 
         if len(r) != RECSIZE:
