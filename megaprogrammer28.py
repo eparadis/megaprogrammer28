@@ -32,8 +32,8 @@ def calcwriteline(a, l):
     ck = 0
     s = "W" + ("%04x" % a) + ":"
     for c in l:
-        s = s + ("%02x" % ord(c))
-        ck = ck ^ ord(c)
+        s = s + ("%02x" % c)
+        ck = ck ^ c
     s = s + "ffffffffffffffffffffffffffffffff"
     s = s[:38]
     if (len(l) & 1):
@@ -117,7 +117,7 @@ if s == "-s":
         s = calcwriteline(a, l)
         print(s)
         sys.stdout.flush()
-        ser.write(s + chr(10))
+        ser.write((s + chr(10)).encode())
         waitokay()
         sys.stdout.flush()
         if len(l) != RECSIZE:
