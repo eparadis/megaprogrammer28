@@ -97,12 +97,9 @@ if s == "-b":
             s = "R" + addr + chr(10)
             ser.write(s.encode())
             l = ser.readline()
-            o = l.upper()
-            content = o[5:-5]
-            for i in range(0,64,2):
-                by = content[i:i+2]
-                if len(by)>0: 
-                    sys.stdout.write(chr(int(by, 16))),
+            o = l.decode().strip()
+            content = o[5:-3]
+            sys.stdout.buffer.write(bytes.fromhex(content))
             waitokay()
             dumpstart = dumpstart + RECSIZE
 
