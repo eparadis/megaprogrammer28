@@ -79,7 +79,7 @@ if s == "-R":
             ser.write(s.encode())
             l = ser.readline()
             o = l.upper().decode().strip()
-            content = o[5:-5]
+            content = o[5:-3]
             for i in range(0,64,2):
                 by = content[i:i+2]
                 print(by, end=' ')
