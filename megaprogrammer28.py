@@ -47,7 +47,7 @@ def waitokay():
     bad = 0
     while True:
         s = ser.readline()
-        print(s)
+        #print(s)
         if s == b'OK\r\n':
             break
         else:
@@ -64,7 +64,7 @@ if s == "-r":
             s = "R" + addr + chr(10)
             ser.write(s.encode())
             l = ser.readline()
-            print(l.upper(), end=' ')
+            print(l.upper().decode().strip(), end='\n')
             waitokay()
             dumpstart = dumpstart + RECSIZE
 
@@ -78,7 +78,7 @@ if s == "-R":
             s = "R" + addr + chr(10)
             ser.write(s.encode())
             l = ser.readline()
-            o = l.upper()
+            o = l.upper().decode().strip()
             content = o[5:-5]
             for i in range(0,64,2):
                 by = content[i:i+2]
@@ -134,11 +134,12 @@ if s == "-v":
     while True:
         #s = ("R" + ("%04x" % a) + chr(10)).encode('utf-8')
         s = ("R%04x\n" % a).encode()
-        print(s)
-        print("%d bytes out" % ser.write(s))
+        #print(s)
+        #print("%d bytes out" % ser.write(s))
+        ser.write(s)
         l = ser.readline()
         l = l.upper()
-        print(l)
+        #print(l)
         waitokay()
 
         romt = "ROM  %04x:" % a
